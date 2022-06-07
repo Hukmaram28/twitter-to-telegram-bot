@@ -82,7 +82,7 @@ class Manage extends Command
             $pipelines = config('pipelines');
             $currentTwitterId = $tweet['data']['author_id'];
             
-            if (!isset($tweet['data']['referenced_tweets']) or (isset($tweet['data']['referenced_tweets']) and $tweet['data']['author_id'] === $tweet['data']['in_reply_to_user_id'])) {
+            if (!isset($tweet['data']['referenced_tweets']) or ((isset($tweet['data']['referenced_tweets']) and isset($tweet['data']['in_reply_to_user_id'])) and $tweet['data']['author_id'] === $tweet['data']['in_reply_to_user_id']) or (isset($tweet['data']['referenced_tweets']) and $tweet['data']['referenced_tweets'][0]['type'] === 'quoted')) {
                 foreach ($idsMap[$currentTwitterId] as $telegramChatId) {
                     if (!is_null($pipelinesMap)) {
                         /** @var DataHub $dataHub */
