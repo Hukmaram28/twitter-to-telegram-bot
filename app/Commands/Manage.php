@@ -81,24 +81,26 @@ class Manage extends Command
             echo json_encode($tweet, JSON_PRETTY_PRINT);
             $pipelines = config('pipelines');
             $currentTwitterId = $tweet['data']['author_id'];
+            
+            if (!isset($tweet['data']['referenced_tweets']) or (isset($tweet['data']['referenced_tweets']) and $tweet['data']['author_id'] === $tweet['data']['in_reply_to_user_id'])) {
+                foreach ($idsMap[$currentTwitterId] as $telegramChatId) {
+                    if (!is_null($pipelinesMap)) {
+                        /** @var DataHub $dataHub */
+                        $dataHub = (new $pipelines[$pipelinesMap[$currentTwitterId]]())->create()
+                            ->run(new DataHub($tweet, new TelegramPayload($telegramChatId)));
+                    } else {
+                        /** @var DataHub $dataHub */
+                        $dataHub = (new $pipelines['default']())->create()
+                            ->run(new DataHub($tweet, new TelegramPayload($telegramChatId)));
+                    }
 
-            foreach ($idsMap[$currentTwitterId] as $telegramChatId) {
-                if (!is_null($pipelinesMap)) {
-                    /** @var DataHub $dataHub */
-                    $dataHub = (new $pipelines[$pipelinesMap[$currentTwitterId]]())->create()
-                        ->run(new DataHub($tweet, new TelegramPayload($telegramChatId)));
-                } else {
-                    /** @var DataHub $dataHub */
-                    $dataHub = (new $pipelines['default']())->create()
-                        ->run(new DataHub($tweet, new TelegramPayload($telegramChatId)));
+                    $sendType = $telegramSendTypeService->generate($dataHub)->value;
+
+                    file_get_contents(
+                        "https://api.telegram.org/bot$telegramApiToken/$sendType?"
+                        . http_build_query($dataHub->getTelegramPayload())
+                    );
                 }
-
-                $sendType = $telegramSendTypeService->generate($dataHub)->value;
-
-                file_get_contents(
-                    "https://api.telegram.org/bot$telegramApiToken/$sendType?"
-                    . http_build_query($dataHub->getTelegramPayload())
-                );
             }
         })->startListening(
             // Add all the necessary fields to response.
