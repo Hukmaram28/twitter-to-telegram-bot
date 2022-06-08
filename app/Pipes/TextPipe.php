@@ -13,7 +13,7 @@ class TextPipe extends PipeAbstract
         // We need to clean up the message from any kind of urls
         // because if tweet has some urls in it then they will be
         // present in entities array, and we can extract proper urls from there.
-        $text = $this->deurlify($tweet['data']['text']);
+        $text = $this->deurlify(str_replace("@" . explode("@", $tweet['data']['text'])[count(explode("@", $tweet['data']['text'])) - 1], "", $tweet['data']['text']));
 
         if (!empty($tweet['data']['entities']) && !isset($tweet['includes']['media'])) {
             if (!empty($tweet['data']['entities']['urls'])) {
